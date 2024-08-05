@@ -16,8 +16,10 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            .csrf().disable()  // Disable CSRF protection
             .authorizeRequests()
-            .antMatchers("/books/**").authenticated()  // Secure all /books endpoints
+            .antMatchers("/books/public/view").permitAll()  // Allow access to /books/public/view without authentication
+            .antMatchers("/books/**").authenticated()  // Secure all other /books endpoints
             .anyRequest().permitAll()  // Allow all other endpoints
             .and()
             .httpBasic();  // Enable Basic Authentication
