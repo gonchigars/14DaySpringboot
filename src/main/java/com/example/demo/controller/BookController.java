@@ -22,7 +22,7 @@ public class BookController {
         this.bookService = bookService;
     }
 
-    @GetMapping
+    @GetMapping("/books")
     public List<Book> getAllBooks() {
         return bookService.getAllBooks();
     }
