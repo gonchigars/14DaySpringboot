@@ -1,118 +1,84 @@
-### Tutorial on Integration Testing with Spring Boot
-
-Before diving into the code, let’s start with a brief tutorial on what integration testing is and how it’s done in a Spring Boot application.
-
-#### What is Integration Testing?
-
-Integration testing is a phase in software testing where individual units or components are combined and tested as a group. The purpose of this testing is to verify the interactions between different parts of the application, ensuring that they work together as expected.
-
-In a Spring Boot application, integration tests often involve testing the interaction between the controller, service, and repository layers, along with other components like databases or external APIs.
-
-#### Key Concepts
-
-1. **Spring Boot Test Annotations**:
-   - `@SpringBootTest`: This annotation is used to create an application context and load all the beans needed for the test. It’s ideal for integration testing.
-   - `@AutoConfigureMockMvc`: This annotation configures the `MockMvc` object, which allows you to test your web layer without starting a full HTTP server.
-2. **MockMvc**:
-
-   - `MockMvc` is a Spring class that lets you simulate HTTP requests and assert responses, making it possible to test the controller layer of your application in isolation from other parts.
-
-3. **WithMockUser**:
-   - `@WithMockUser`: This annotation is used to mock a user with a specific role in your tests, which is useful when testing secured endpoints.
-
-### Step-by-Step Explanation of the Code
-
-Now that we have some background, let's break down the code.
-
-#### 1. **Class Annotations**
+unit test case for the `BookController` class and explain it. Here's a unit test for the `getAllBooks` method:
 
 ```java
-@SpringBootTest
-@AutoConfigureMockMvc
-public class BookControllerIntegrationTest {
-```
+package com.example.demo.controller;
 
-- `@SpringBootTest`: Loads the full application context for the test. It’s like running your application but within the test environment.
-- `@AutoConfigureMockMvc`: Automatically configures the `MockMvc` instance, which you’ll use to perform HTTP requests in your tests.
+import com.example.demo.entity.Book;
+import com.example.demo.service.BookService;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-#### 2. **Field Injection**
+import java.util.Arrays;
+import java.util.List;
 
-```java
-@Autowired
-private MockMvc mockMvc;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
 
-@Autowired
-private BookRepository bookRepository;
-```
+@ExtendWith(MockitoExtension.class)
+public class BookControllerTest {
 
-- `MockMvc`: This is the object you use to simulate HTTP requests in your tests.
-- `BookRepository`: You inject the repository to interact with the database, such as saving a book for testing purposes.
+    @Mock
+    private BookService bookService;
 
-#### 3. **Test Method for Getting All Books**
+    @InjectMocks
+    private BookController bookController;
 
-```java
-@Test
-@WithMockUser(username = "user", roles = {"USER"})
-public void testGetAllBooks() throws Exception {
-    mockMvc.perform(get("/books")
-            .contentType(MediaType.APPLICATION_JSON))
-            .andExpect(status().isOk());
+    @Test
+    public void testGetAllBooks() {
+        // Arrange
+        Book book1 = new Book();
+        book1.setId(1L);
+        book1.setTitle("Book 1");
+
+        Book book2 = new Book();
+        book2.setId(2L);
+        book2.setTitle("Book 2");
+
+        List<Book> expectedBooks = Arrays.asList(book1, book2);
+
+        when(bookService.getAllBooks()).thenReturn(expectedBooks);
+
+        // Act
+        List<Book> actualBooks = bookController.getAllBooks();
+
+        // Assert
+        assertEquals(expectedBooks.size(), actualBooks.size());
+        assertEquals(expectedBooks.get(0).getTitle(), actualBooks.get(0).getTitle());
+        assertEquals(expectedBooks.get(1).getTitle(), actualBooks.get(1).getTitle());
+    }
 }
+
 ```
 
-- `@Test`: Marks this method as a test case.
-- `@WithMockUser`: Mocks a user with the role `USER` to simulate an authenticated request.
-- `mockMvc.perform(get("/books"))`: Simulates a GET request to the `/books` endpoint.
-- `.andExpect(status().isOk())`: Asserts that the HTTP status of the response is `200 OK`.
+Now, let me explain this unit test:
 
-#### 4. **Test Method for Creating a Book**
+1. Setup:
 
-```java
-@Test
-@WithMockUser(username = "user", roles = {"USER"})
-public void testCreateBook() throws Exception {
-    String newBookJson = "{\"title\":\"Integration Book\",\"author\":\"Integration Author\",\"isbn\":\"123-1234567890\",\"publishedDate\":\"2023-01-01\"}";
+   - We use `@ExtendWith(MockitoExtension.class)` to enable Mockito for this test class.
+   - `@Mock` is used to create a mock `BookService`.
+   - `@InjectMocks` is used to create an instance of `BookController` and automatically inject the mocked `BookService`.
 
-    mockMvc.perform(post("/books")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(newBookJson))
-            .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.title").value("Integration Book"));
-}
-```
+2. Test Method:
 
-- Here, a new book is created using a JSON string. The `post` method simulates sending a POST request to create the book.
-- `jsonPath("$.title").value("Integration Book")`: Verifies that the response contains a book with the title "Integration Book".
+   - The `testGetAllBooks()` method is our actual test case.
 
-#### 5. **Test Method for Deleting a Book**
+3. Arrange:
 
-```java
-@Test
-@WithMockUser(username = "user", roles = {"USER"})
-public void testDeleteBook() throws Exception {
-    // Arrange
-    Book book = new Book();
-    book.setTitle("Delete Test Book");
-    book.setAuthor("Test Author");
-    book.setIsbn("123-1234567890");
-    book.setPublishedDate(LocalDate.now());
-    book = bookRepository.save(book);
+   - We create two `Book` objects to simulate the data that would be returned by the `BookService`.
+   - We use `when(bookService.getAllBooks()).thenReturn(expectedBooks)` to mock the behavior of `bookService.getAllBooks()`. This tells Mockito to return our `expectedBooks` list when this method is called.
 
-    // Act & Assert
-    mockMvc.perform(delete("/books/" + book.getId()))
-            .andExpect(status().isOk());
-}
-```
+4. Act:
 
-- This test first saves a book to the repository, then attempts to delete it.
-- The `delete` method simulates sending a DELETE request to the endpoint `/books/{id}`.
-- It asserts that the status of the response is `200 OK`, indicating that the deletion was successful.
+   - We call the `getAllBooks()` method on our `bookController`.
 
-### Recap
+5. Assert:
+   - We use assertions to verify that the result matches our expectations:
+     - We check if the size of the returned list matches our expected list.
+     - We check if the titles of the books in the returned list match our expected books.
 
-- **Integration Testing**: Verifies how components interact in a Spring Boot application.
-- **MockMvc**: Simulates HTTP requests and responses.
-- **Annotations**: `@SpringBootTest` for loading the context, `@AutoConfigureMockMvc` for configuring `MockMvc`, and `@WithMockUser` for simulating authenticated users.
-- **Testing Methods**: Test cases simulate different HTTP requests (GET, POST, DELETE) and validate the responses.
+This unit test verifies that the `BookController.getAllBooks()` method correctly returns the list of books provided by the `BookService`. It's a focused test that doesn't depend on the actual implementation of `BookService` or any database operations, making it fast and reliable.
 
-By understanding these concepts, your students should be able to grasp how to effectively write and understand integration tests in Spring Boot.
+By mocking the `BookService`, we isolate the `BookController` and test only its logic, which in this case is simply to return the result of `bookService.getAllBooks()`. This approach allows us to test the controller's behavior independently of other components in the system.
