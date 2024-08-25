@@ -1,4 +1,4 @@
-## **Spring Boot Movie API Tutorial (Without `adult` Field)**
+## **Spring Boot Movie API Tutorial **
 
 ### **Objective**
 
