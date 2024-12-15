@@ -22,7 +22,7 @@ public class BookController {
         this.bookService = bookService;
     }
 
-    @GetMapping
+    @GetMapping("/books")
     public List<Book> getAllBooks() {
         System.out.println("getAllBooks method called");
         List<Book> books = bookService.getAllBooks();
